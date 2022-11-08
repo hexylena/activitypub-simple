@@ -1,0 +1,43 @@
+alice:
+  followers:
+  - https://mastodon.social/users/hexylena
+  following:
+  - https://mastodon.social/users/hexylena
+  name: Alice Lily
+  toots:
+  - date: '2022-11-08T15:47:01Z'
+    id: 94b47212-81b6-4d9d-adc6-961fc4f71c2c
+    replies: []
+    text: hiiii
+  - date: '2022-11-08T16:20:05Z'
+    id: cf883eff-6230-4d63-ba41-4b17267d8b20
+    pinned: true
+    replies: []
+    text: Pinned Toot
+  - date: '2022-11-08T16:44:35Z'
+    id: a10197c6-d51d-4325-8aad-cc213a7b428b
+    replies: []
+    text: hello, world
+  - date: '2022-11-08T16:46:03Z'
+    id: 2080b413-906c-4276-96a7-7c5ffd77a1df
+    replies: []
+    text: ni hao
+  - date: '2022-11-08T16:46:18Z'
+    id: 9c851743-0e61-40f5-b7f7-fc4e8b51c21e
+    replies: []
+    text: ni hao
+  - date: '2022-11-08T16:46:39Z'
+    id: 03f4468c-917a-4bfe-a162-367bf985e052
+    replies: []
+    text: ni hao
+  - date: '2022-11-08T16:48:58Z'
+    id: 12ced259-b176-4dc3-bca1-3b33184c4daa
+    replies: []
+    text: ni hao @hexylena@mastodon.social
+  type: Service
+bob:
+  followers: []
+  following: []
+  name: Roberta
+  toots: []
+  type: Service
