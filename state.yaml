@@ -34,10 +34,40 @@ alice:
     id: 12ced259-b176-4dc3-bca1-3b33184c4daa
     replies: []
     text: ni hao @hexylena@mastodon.social
+  - date: '2022-11-09T16:18:11Z'
+    id: df0b7fa8-2151-46b1-a679-17f0616e3144
+    replies: []
+    text: ni hao hexylena
+  - date: '2022-11-09T16:19:09Z'
+    id: 60b1a082-fa3b-408b-bb8a-4963bf058031
+    replies: []
+    text: ni hao hexylena
   type: Service
 bob:
+  followers:
+  - https://mastodon.social/users/hexylena
+  following:
+  - https://mastodon.social/users/hexylena
+  name: Roberta
+  toots: []
+  type: Service
+test1:
   followers: []
   following: []
-  name: Roberta
+  name: Bot test1
+  toots: []
+  type: Service
+test2:
+  followers:
+  - https://mastodon.social/users/hexylena
+  following: []
+  name: Bot test2
+  toots: []
+  type: Service
+test3:
+  followers:
+  - https://mastodon.social/users/hexylena
+  following: []
+  name: Bot test3
   toots: []
   type: Service

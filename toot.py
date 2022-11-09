@@ -35,7 +35,7 @@ private_key = crypto_serialization.load_pem_private_key(
 
 current_date = datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
 
-recipient_inbox = "https://mastodon.social/inbox"
+recipient_inbox = "https://mastodon.social/users/hexylena/inbox"
 recipient_parsed = urlparse(recipient_inbox)
 recipient_host = recipient_parsed.netloc
 recipient_path = recipient_parsed.path

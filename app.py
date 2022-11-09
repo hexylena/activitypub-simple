@@ -24,24 +24,23 @@ def save_state(state):
         yaml.dump(state, handle)
 
 STATE = load_state()
-print(STATE)
+#print(STATE)
 
 PUBKEY = open('public.pem', 'r').read().strip()
 
 # Synthetic auto-generated users for test.
 def get_user(user):
-    if user in STATE:
-        return STATE[user]
-    else:
-        return {
+    if user not in STATE:
+        STATE[user] =  {
             'name': f'Bot {user}',
             "type": "Service",
+            'toots': [],
+            'followers': [],
             'following': [
-                'https://ap.galaxians.org/users/alice',
-                'https://mastodon.social/users/hexylena',
-                'https://tech.lgbt/users/hexylena',
             ],
         }
+    save_state(STATE)
+    return STATE[user]
 
 
 def toot_from_state(user, id):
@@ -127,6 +126,38 @@ def hostmeta():
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
   <Link rel="lrdd" template="https://ap.galaxians.org/.well-known/webfinger?resource={uri}"/>
 </XRD>""")
+
+@app.route('/.well-known/nodeinfo')
+def nodeinfo():
+    return Response(json.dumps({"links":[{"rel":"http://nodeinfo.diaspora.software/ns/schema/2.0","href":"https://ap.galaxians.org/nodeinfo/2.0"}]}), mimetype='application/ld+json')
+
+@app.route('/.well-known/nodeinfo/2.0')
+def nodeinfo2():
+    resp = {
+      "version": "2.0",
+      "software": {
+	"name": "mwap",
+	"version": "0.0.1"
+      },
+      "protocols": [
+	"activitypub"
+      ],
+      "services": {
+	"outbound": [],
+	"inbound": []
+      },
+      "usage": {
+	"users": {
+	  "total": 5,
+	  "activeMonth": 5,
+	  "activeHalfyear": 5 
+	},
+	"localPosts": 1000
+      },
+      "openRegistrations": false,
+      "metadata": []
+    }
+    return Response(json.dumps(resp), mimetype='application/ld+json')
 
 @app.route('/.well-known/webfinger', methods=['GET'])
 def webfinger():
@@ -363,8 +394,20 @@ def _userinfo(user):
 @app.route('/inbox', methods=['POST'])
 def shared_inbox():
     print("SHARED INBOX")
+    # {'@context': 'https://www.w3.org/ns/activitystreams', 'id': 'https://mastodon.social/users/infornocmics#delete', 'type': 'Delete', 'actor': 'https://mastodon.social/users/infornocmics', 'to': ['https://www.w3.org/ns/activitystreams#Public'], 'object': 'https://mastodon.social/users/infornocmics', 'signature': {'type': 'RsaSignature2017', 'creator': 'https://mastodon.social/users/infornocmics#main-key', 'created': '2022-11-09T15:20:21Z', 'signatureValue': 'R53FzlEzCRGeBS/FwXhoH16KQ0AhSxeS6X4Rk+bExkxrOuxoPjQ2J02vIk8BlacfbrV1vwoJsOaIw+AGrHPzUDgYWrwu4suaFZuAd4kXJtw1BAKd3lkgr40Drbw5N2GnsXfxhtt4fD+VhAHEYtd2wEhP7lJl7vEyyGG0uy7Ek/l+kIIxwI/1cat3oMiyyCflJT8qb9bRw1asdrMHkj1JIvwp9w2SowIKd2SynAuGht3BFqt4brs39hY+C5YejV6QdVEzYqVUjbscSqEqhkYsFtjmyTITSaFQHpDv4S5IERs7S/USSQU4c++EB3xJnhlBvXe6Z1XNYPxee31+9B1FvQ=='}}
+    try:
+        body = request.get_json()
+        if body['type'] == 'Delete':
+            print(f"Requesting deletion of {body['actor']}")
+            return Response(json.dumps({}), mimetype='application/ld+json', status=200)
+        if body['type'] == 'Update':
+            print(f"Providing you with updated information for {body['actor']}")
+            return Response(json.dumps({}), mimetype='application/ld+json', status=200)
+    except:
+        pass
+
     print(request.headers)
-    print(request.get_json())
+    print(request.data)
     return Response(json.dumps({}), mimetype='application/ld+json', status=202)
 
 @app.route('/users/<user>/inbox', methods=['GET', 'POST'])
@@ -380,6 +423,30 @@ def inbox(user):
             print("New Follower!")
             STATE[user]['followers'].append(body['actor'])
             save_state(STATE)
+            # Here we need to send back an 'ACCEPT' asap, using the same encoding as in follow.py
+            # Kinda weird to send the accept back before we've "finished" processing their request but, shrug.
+            response = {
+                '@context': 'https://www.w3.org/ns/activitystreams',
+                'id': f'https://ap.galaxians.org/users/{user}#accepts/follows/',
+                'type': 'Accept',
+                'actor': f'https://ap.galaxians.org/users/{user}',
+                'object': {
+                    'id': f"{body['actor']}#follow",
+                    'type': 'Follow',
+                    'actor': body['actor'],
+                    'object': f'https://ap.galaxians.org/users/{user}'
+                }
+            }
+            sender_url = f"https://ap.galaxians.org/users/{user}"
+            sender_key = f"{sender_url}#main-key"
+            headers = apcrypt.generate_signed_headers('private.pem', accept_message, recipient_inbox, sender_key)
+            print(headers)
+            print(accept_message)
+            if False:
+                r = requests.post(recipient_inbox, headers=headers, json=follow_request_message)
+                print(r.headers)
+                print(r.text)
+                print(r.status_code)
 
         return Response('{}', mimetype='application/ld+json', status=202)
     except:
@@ -396,6 +463,7 @@ def inbox(user):
     response =  {
       "@context": [
         "https://www.w3.org/ns/activitystreams",
+        #"https://ap.galaxians.org/schemas/litepub-0.1.jsonld", # At some point switch? It's easier.
         {
           "ostatus": "http://ostatus.org#",
           "atomUri": "ostatus:atomUri",
@@ -416,5 +484,12 @@ def inbox(user):
     }
     return Response(json.dumps(response), mimetype='application/ld+json')
 
+@app.route('/schemas/litepub-0.1.jsonld')
+def litepub():
+    return send_file('litepub-0.1.jsonld', mimetype='image/png')
 
-    
+@app.route('/<path:path>')
+def catch_all(path):
+    print(request.headers)
+    print(request.data)
+    return Response(json.dumps({}), mimetype='application/ld+json')
